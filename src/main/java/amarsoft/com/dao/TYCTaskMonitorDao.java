@@ -64,6 +64,15 @@ public class TYCTaskMonitorDao {
 	}
 
 	/**
+	 *	跑批数据完成时 记录点用接口传递参数
+	 */
+	public void updateMonitorParams(String serialno ,String params,String status,String message){
+		String sql = "update tyc_task_monitor set inputparams = ? , sattus =? ,message = ? where serialno=?";
+		logger.info("更新tyc接口数据写入任务状态：" + LogsUtils.getSqlLog(sql, params, status ,serialno,message));
+		tycJdbcTemplate.update(sql, new Object[]{params, status, serialno,message});
+	}
+
+	/**
 	 * 新增任务记录
 	 */
 	public void insertTaskMonitor(TYCTaskMonitor t) {

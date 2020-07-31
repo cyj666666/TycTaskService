@@ -54,7 +54,8 @@ public class PaoPishuju {
     private static List<String> tables;
 
     static {
-        tables = Arrays.asList("company_change", "company_holder", "company_holder_entpub", "company_staff", "human_name", "area_code", "category_code", "company_judicial_sale", "company_judicial_sale_item", "company_land_mortgage", "company_punishment_info_creditchina", "company_zxr_evaluate", "company_court_announcement", "company_court_open_announcement", "company_court_register", "company_dishonest_info", "company_judicial_assistance", "company_lawsuit", "company_send_announcement", "company_zxr", "company_zxr_final_case", "company_zxr_restrict", "company_copyright_reg", "company_copyright_works", "company_icp", "company_patent", "company_tm", "company_wechat", "company_app_info", "company_certificate", "company_customs_credit", "company_customs_credit_administrative_penalty", "company_customs_credit_rating", "company_employment", "company_land_announcement", "company_land_publicity", "company_land_transfer", "company_tele_license", "company_tele_license_annual_report", "company_tele_license_communication_badness", "company_weibo", "company_bid", "company_license", "company_license_creditchina", "company_license_entpub", "product_competition", "company_finance", "company_team_member", "organization", "organization_company_relation", "organization_invest");
+        //tables = Arrays.asList("company","company_change","company_holder","company_holder_entpub","company_staff","human_name","area_code","category_code","company_judicial_sale","company_judicial_sale_item","company_land_mortgage","company_punishment_info_creditchina","company_zxr_evaluate","company_court_announcement","company_court_open_announcement","company_court_register","company_dishonest_info","company_judicial_assistance","company_lawsuit","company_send_announcement","company_zxr","company_zxr_final_case","company_zxr_restrict","company_copyright_reg","company_copyright_works","company_icp","company_patent","company_tm","company_wechat","company_app_info","company_certificate","company_customs_credit","company_customs_credit_administrative_penalty","company_customs_credit_rating","company_employment","company_land_announcement","company_land_publicity","company_land_transfer","company_tele_license","company_tele_license_annual_report","company_tele_license_communication_badness","company_weibo","company_bid","company_license","company_license_creditchina","company_license_entpub","product_competition","company_finance","company_team_member","organization","organization_company_relation","organization_invest");
+        tables = Arrays.asList("company","company_change");
     }
 
     public void run() {
@@ -64,7 +65,7 @@ public class PaoPishuju {
             list.stream().forEach(e -> {
                 Date starttime = DateUtils.parse(e.getStarttime());
                 Date endtime = DateUtils.parse(e.getEndtime());
-                tables.parallelStream().forEach(table -> {
+                tables.stream().forEach(table -> {
                     String serialno = generatorSerialno(starttime);
                     TYCTaskMonitor newTaskMonitor = new TYCTaskMonitor();
                     newTaskMonitor.setSerialno(table + serialno);
@@ -124,7 +125,14 @@ public class PaoPishuju {
                 logger.info("[" + formatStartTime + "--" + formatEndTime + "],[" + table + "]查询出" + page + "页数据,每页size:" + ps + "条");
 
                 JSONArray jsonArray = jsonObject.getJSONObject("data").getJSONArray("items");
-                insertTableDate(jsonArray);
+                try{
+                    insertTableDate(jsonArray);
+                }catch (Exception excetion){
+                    //插入table数据报错  对任务记录表进行 记录操作，记录传入参数 msg就记录报错信息
+                    tycTaskMonitorDao.updateMonitorParams((table+serialno),query.toString(),"2","对"+table+"进行数据插入时出错");
+                    throw new RuntimeException("对"+table+"进行数据插入时出错");
+                }
+
 
                 page--;
                 String scrollId = jsonObject.getJSONObject("data").getString("scrollId");
@@ -149,31 +157,46 @@ public class PaoPishuju {
                     JSONObject jsonObjectPage = CallAppletServiceUtils.get("https://data.tianyancha.com/dblog.json", queryPage);
                     if (jsonObjectPage.get("state").toString().equals("ok")) {
                         JSONArray jsonArrayCurPage = jsonObjectPage.getJSONObject("data").getJSONArray("items");
-                        insertTableDate(jsonArrayCurPage);
+                        try{
+                            insertTableDate(jsonArrayCurPage);
+                        }catch (Exception exception){
+                            //插入table数据报错  对任务记录表进行 记录操作，记录传入参数 msg就记录报错信息
+                            tycTaskMonitorDao.updateMonitorParams((table+serialno),queryPage.toString(),"2","对"+table+"进行数据插入时出错");
+                            throw new RuntimeException("对"+table+"进行数据插入时出错");
+                        }
+
                         page--;
                     } else {
                         logger.info("[" + formatStartTime + "--" + formatEndTime + "],[" + table + "]第" + curpage + "页查询出数据出错,message:" + jsonObjectPage.get("message"));
                         dataResult = false;
                         message = "[查询第" + curpage + "页数据]报错，message:" + jsonObjectPage.get("message") + "";
-                        break;
+                        tycTaskMonitorDao.updateMonitorParams((table+serialno),queryPage.toString(),"2",message);
+                        throw new RuntimeException("************************");
+                        //break;
                     }
                 }
             } else {
                 logger.info("[" + formatStartTime + "--" + formatEndTime + "],[" + table + "]第1页查询出数据出错,message:" + jsonObject.get("message"));
+
+
                 dataResult = false;
                 message = "[查询第1页数据]报错，message:" + jsonObject.get("message") + "";
+                tycTaskMonitorDao.updateMonitorParams((table+serialno),query.toString(),"2",message);
+                throw new RuntimeException("************************"+message);
             }
         } catch (Exception exception) {
             dataResult = false;
-            message = "[sql查询抛出异常],message:" + exception.getMessage();
-            logger.info("sql查询抛出异常", exception);
+            message = "[接口调用抛出异常],message:" + exception.getMessage();
+            logger.info("接口调用抛出异常111", exception);
+            throw new RuntimeException("************************");
         }
-        if (dataResult) {
+
+        /*if (dataResult) {
             //完成操作将任务记录状态更改为完成
             tycTaskMonitorDao.updateMonitorBySerialno((e + serialno), 1, message);
         } else {
             tycTaskMonitorDao.updateMonitorBySerialno((e + serialno), 2, message);
-        }
+        }*/
     }
 
     //调接口返回数据存入数据库中
