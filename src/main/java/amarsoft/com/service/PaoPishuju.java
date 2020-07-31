@@ -127,7 +127,7 @@ public class PaoPishuju {
             } catch (Exception excetion) {
                 logger.info("[" + formatStartTime + "--" + formatEndTime + "],[" + table + "]查询第1页数据报异常,message:", excetion);
                 //插入table数据报错  对任务记录表进行 记录操作，记录传入参数 msg就记录报错信息
-                tycTaskMonitorDao.updateMonitorParams((table + serialno), query.toString(), 2, "对" + table + "进行数据插入时出错");
+                tycTaskMonitorDao.updateMonitorParams((table + serialno), query.toString(), 2, "[" + formatStartTime + "--" + formatEndTime + "],[" + table + "]查询第1页数据sql报异常");
             }
             page--;
             String scrollId = jsonObject.getJSONObject("data").getString("scrollId");
@@ -158,7 +158,7 @@ public class PaoPishuju {
                     } catch (Exception exception) {
                         logger.info("[" + formatStartTime + "--" + formatEndTime + "],[" + table + "]分页查询第" + curpage + "页数据报异常:", exception);
                         //插入table数据报错  对任务记录表进行 记录操作，记录传入参数 msg就记录报错信息
-                        tycTaskMonitorDao.updateMonitorParams((table + serialno), queryPage.toString(), 2, "对" + table + "进行数据插入时出错");
+                        tycTaskMonitorDao.updateMonitorParams((table + serialno), queryPage.toString(), 2, "[" + formatStartTime + "--" + formatEndTime + "],[" + table + "]分页查询第" + curpage + "页数据sql报异常");
                         break;
                     }
                 } else {

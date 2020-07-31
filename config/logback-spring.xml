@@ -24,7 +24,7 @@
         
     <springProfile name="dev">
         <root level="INFO">
-        	<appender-ref ref="consoleAppender"></appender-ref>
+        	<appender-ref ref="FileAppender"></appender-ref>
         </root>
     </springProfile>
     
