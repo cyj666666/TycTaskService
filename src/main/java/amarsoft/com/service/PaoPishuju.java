@@ -65,7 +65,7 @@ public class PaoPishuju {
             list.stream().forEach(e -> {
                 Date starttime = DateUtils.parse(e.getStarttime());
                 Date endtime = DateUtils.parse(e.getEndtime());
-                tables.stream().forEach(table -> {
+                tables.parallelStream().forEach(table -> {
                     String serialno = generatorSerialno(starttime);
                     TYCTaskMonitor newTaskMonitor = new TYCTaskMonitor();
                     newTaskMonitor.setSerialno(table + serialno);
@@ -77,11 +77,9 @@ public class PaoPishuju {
                     tycTaskMonitorDao.insertTaskMonitor(newTaskMonitor);
                     executeTask(table, serialno, starttime, endtime);
                 });
-
             });
         }
     }
-
     private void executeTask(String e, String serialno, Date taskStarttime, Date taskEndtime) {
         boolean dataResult = false;
         String message = "";
@@ -127,13 +125,12 @@ public class PaoPishuju {
                 JSONArray jsonArray = jsonObject.getJSONObject("data").getJSONArray("items");
                 try{
                     insertTableDate(jsonArray);
+
                 }catch (Exception excetion){
                     //插入table数据报错  对任务记录表进行 记录操作，记录传入参数 msg就记录报错信息
                     tycTaskMonitorDao.updateMonitorParams((table+serialno),query.toString(),"2","对"+table+"进行数据插入时出错");
                     throw new RuntimeException("对"+table+"进行数据插入时出错");
                 }
-
-
                 page--;
                 String scrollId = jsonObject.getJSONObject("data").getString("scrollId");
                 //生成signPage
@@ -164,7 +161,6 @@ public class PaoPishuju {
                             tycTaskMonitorDao.updateMonitorParams((table+serialno),queryPage.toString(),"2","对"+table+"进行数据插入时出错");
                             throw new RuntimeException("对"+table+"进行数据插入时出错");
                         }
-
                         page--;
                     } else {
                         logger.info("[" + formatStartTime + "--" + formatEndTime + "],[" + table + "]第" + curpage + "页查询出数据出错,message:" + jsonObjectPage.get("message"));
@@ -177,8 +173,6 @@ public class PaoPishuju {
                 }
             } else {
                 logger.info("[" + formatStartTime + "--" + formatEndTime + "],[" + table + "]第1页查询出数据出错,message:" + jsonObject.get("message"));
-
-
                 dataResult = false;
                 message = "[查询第1页数据]报错，message:" + jsonObject.get("message") + "";
                 tycTaskMonitorDao.updateMonitorParams((table+serialno),query.toString(),"2",message);
