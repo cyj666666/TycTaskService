@@ -1,0 +1,35 @@
+#测试环境数据库连接配置,采用阿里巴巴的Druid数据源进行配置
+spring:
+  datasource:
+    tycdb:
+      driverClassName: com.mysql.jdbc.Driver
+      url: jdbc:mysql://192.168.61.78:3306/tianyanchatest
+      username: tianyanchatest
+      password: tianyanchatest
+      # 初始化大小，最小，最大
+      initialSize: 5
+      minIdle: 5
+      maxActive: 20
+      # 配置获取连接等待超时的时间
+      maxWait: 60000
+      # 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒
+      timeBetweenEvictionRunsMillis: 100000
+      # 配置一个连接在池中最小生存的时间，单位是毫秒
+      minEvictableIdleTimeMillis: 600000
+      removeAbandoned: true
+      removeAbandonedTimeout: 180
+      poolPreparedStatements: false
+      numTestsPerEvictionRun: 10
+      defaultAutoCommit: true
+      testWhileIdle: true
+      testOnBorrow: false
+      testOnReturn: false
+
+amarsoft:
+  tyc:
+    accessKey: cHl0UQYhUQUerfOW
+    accessSecret: GCNMQzEpigpEGKaX
+    scrollTimeout: 3600
+    enableScroll: true
+    ps: 1000
+
