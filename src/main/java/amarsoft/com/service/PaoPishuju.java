@@ -51,11 +51,10 @@ public class PaoPishuju {
     @Qualifier("tycdbJdbcTemplate")
     private JdbcTemplate tycJdbcTemplate;
 
-    private static List<String> tables;
+    private static final List<String> tables;
 
     static {
-        //tables = Arrays.asList("company","company_change","company_holder","company_holder_entpub","company_staff","human_name","area_code","category_code","company_judicial_sale","company_judicial_sale_item","company_land_mortgage","company_punishment_info_creditchina","company_zxr_evaluate","company_court_announcement","company_court_open_announcement","company_court_register","company_dishonest_info","company_judicial_assistance","company_lawsuit","company_send_announcement","company_zxr","company_zxr_final_case","company_zxr_restrict","company_copyright_reg","company_copyright_works","company_icp","company_patent","company_tm","company_wechat","company_app_info","company_certificate","company_customs_credit","company_customs_credit_administrative_penalty","company_customs_credit_rating","company_employment","company_land_announcement","company_land_publicity","company_land_transfer","company_tele_license","company_tele_license_annual_report","company_tele_license_communication_badness","company_weibo","company_bid","company_license","company_license_creditchina","company_license_entpub","product_competition","company_finance","company_team_member","organization","organization_company_relation","organization_invest");
-        tables = Arrays.asList("company","company_change");
+        tables = Arrays.asList("area_code", "category_code", "company", "company_amac_product", "company_app_info", "company_bid", "company_certificate", "company_change", "company_copyright_reg", "company_copyright_works", "company_court_announcement", "company_court_open_announcement", "company_court_register", "company_customs_credit", "company_customs_credit_administrative_penalty", "company_customs_credit_rating", "company_dishonest_info", "company_employment", "company_equity_info", "company_finance", "company_holder", "company_holder_entpub", "company_icp", "company_judicial_assistance", "company_judicial_sale", "company_judicial_sale_item", "company_land_announcement", "company_land_mortgage", "company_land_publicity", "company_land_transfer", "company_lawsuit", "company_license", "company_license_creditchina", "company_license_entpub", "company_patent", "company_punishment_info_creditchina", "company_send_announcement", "company_staff", "company_team_member", "company_tele_license", "company_tele_license_annual_report", "company_tele_license_communication_badness", "company_tm", "company_wechat", "company_weibo", "company_zxr", "company_zxr_evaluate", "company_zxr_final_case", "company_zxr_restrict", "human_name", "organization", "organization_company_relation", "organization_invest", "product_competition");
     }
 
     public void run() {
@@ -80,117 +79,98 @@ public class PaoPishuju {
             });
         }
     }
+
     private void executeTask(String e, String serialno, Date taskStarttime, Date taskEndtime) {
-        boolean dataResult = false;
         String message = "";
         String formatStartTime = DateUtils.format(taskStarttime, "yyyy-MM-dd HH:mm:ss");
         String formatEndTime = DateUtils.format(taskEndtime, "yyyy-MM-dd HH:mm:ss");
-        try {
-            // 请求参数(变量)
-            String table = e;
-            Long startTime = taskStarttime.getTime();
-            Long endTime = taskEndtime.getTime();
+        // 请求参数(变量)
+        String table = e;
+        Long startTime = taskStarttime.getTime();
+        Long endTime = taskEndtime.getTime();
 
-            // 生成签名
-            JSONObject query = new JSONObject();
-            query.put("table", table);
-            query.put("startTime", startTime);
-            query.put("endTime", endTime);
+        // 生成签名
+        JSONObject query = new JSONObject();
+        query.put("table", table);
+        query.put("startTime", startTime);
+        query.put("endTime", endTime);
 
-            //当前时间戳
-            long timeStamp = new Date().getTime();
-            query.put("ps", ps);
-            query.put("enableScroll", enableScroll);
-            query.put("scrollTimeout", scrollTimeout);
+        //当前时间戳
+        long timeStamp = new Date().getTime();
+        query.put("ps", ps);
+        query.put("enableScroll", enableScroll);
+        query.put("scrollTimeout", scrollTimeout);
 
-            String sign = AccessSecretUtils.sign(accessSecet, timeStamp, query);
+        String sign = AccessSecretUtils.sign(accessSecet, timeStamp, query);
 
-            query.put("_accessKey", accesskey);
-            query.put("_sign", sign);
-            query.put("_timestamp", timeStamp);
+        query.put("_accessKey", accesskey);
+        query.put("_sign", sign);
+        query.put("_timestamp", timeStamp);
 
-            logger.info("[" + formatStartTime + "--" + formatEndTime + "],[" + table + "]开始调用tianyancha查询接口,入参:" + query);
+        logger.info("[" + formatStartTime + "--" + formatEndTime + "],[" + table + "]开始调用tianyancha查询接口,入参:" + query);
 
-            JSONObject jsonObject = CallAppletServiceUtils.get("https://data.tianyancha.com/dblog.json", query);
+        JSONObject jsonObject = CallAppletServiceUtils.get("https://data.tianyancha.com/dblog.json", query);
 
-            //第一页
-            if (jsonObject.get("state").toString().equals("ok")) {
-                logger.info("[" + formatStartTime + "--" + formatEndTime + "],[" + table + "]查询出数据" + jsonObject.getJSONObject("data").get("realTotal") + "条");
+        //第一页
+        if (jsonObject.get("state").toString().equals("ok")) {
+            logger.info("[" + formatStartTime + "--" + formatEndTime + "],[" + table + "]查询出数据" + jsonObject.getJSONObject("data").get("realTotal") + "条");
 
-                int realTotal = jsonObject.getJSONObject("data").getIntValue("realTotal");
-                int page = (realTotal - 1) / ps + 1;
-                int totalPage = (realTotal - 1) / ps + 1;
-                logger.info("[" + formatStartTime + "--" + formatEndTime + "],[" + table + "]查询出" + page + "页数据,每页size:" + ps + "条");
+            int realTotal = jsonObject.getJSONObject("data").getIntValue("realTotal");
+            int page = (realTotal - 1) / ps + 1;
+            int totalPage = (realTotal - 1) / ps + 1;
+            logger.info("[" + formatStartTime + "--" + formatEndTime + "],[" + table + "]查询出" + page + "页数据,每页size:" + ps + "条");
 
-                JSONArray jsonArray = jsonObject.getJSONObject("data").getJSONArray("items");
-                try{
-                    insertTableDate(jsonArray);
-
-                }catch (Exception excetion){
-                    //插入table数据报错  对任务记录表进行 记录操作，记录传入参数 msg就记录报错信息
-                    tycTaskMonitorDao.updateMonitorParams((table+serialno),query.toString(),"2","对"+table+"进行数据插入时出错");
-                    throw new RuntimeException("对"+table+"进行数据插入时出错");
-                }
-                page--;
-                String scrollId = jsonObject.getJSONObject("data").getString("scrollId");
-                //生成signPage
-                JSONObject querySign = new JSONObject();
-                querySign.put("scrollId", scrollId);
-                dataResult = true;
-                while (page > 0 && scrollId != null) {
-                    JSONObject queryPage = new JSONObject();
-                    //当前时间戳
-                    long timeStampPage = new Date().getTime();
-
-                    queryPage.put("_accessKey", accesskey);
-                    queryPage.put("_timestamp", timeStampPage);
-                    queryPage.put("scrollId", scrollId);
-                    String signPage = AccessSecretUtils.sign(accessSecet, timeStampPage, querySign);
-                    queryPage.put("_sign", signPage);
-
-                    int curpage = totalPage - page + 1;
-                    logger.info("[" + formatStartTime + "--" + formatEndTime + "],[" + table + "]开始调用tianyancha接口分页查询第" + curpage + "页数据,入参:" + queryPage);
-
-                    JSONObject jsonObjectPage = CallAppletServiceUtils.get("https://data.tianyancha.com/dblog.json", queryPage);
-                    if (jsonObjectPage.get("state").toString().equals("ok")) {
-                        JSONArray jsonArrayCurPage = jsonObjectPage.getJSONObject("data").getJSONArray("items");
-                        try{
-                            insertTableDate(jsonArrayCurPage);
-                        }catch (Exception exception){
-                            //插入table数据报错  对任务记录表进行 记录操作，记录传入参数 msg就记录报错信息
-                            tycTaskMonitorDao.updateMonitorParams((table+serialno),queryPage.toString(),"2","对"+table+"进行数据插入时出错");
-                            throw new RuntimeException("对"+table+"进行数据插入时出错");
-                        }
-                        page--;
-                    } else {
-                        logger.info("[" + formatStartTime + "--" + formatEndTime + "],[" + table + "]第" + curpage + "页查询出数据出错,message:" + jsonObjectPage.get("message"));
-                        dataResult = false;
-                        message = "[查询第" + curpage + "页数据]报错，message:" + jsonObjectPage.get("message") + "";
-                        tycTaskMonitorDao.updateMonitorParams((table+serialno),queryPage.toString(),"2",message);
-                        throw new RuntimeException("************************");
-                        //break;
-                    }
-                }
-            } else {
-                logger.info("[" + formatStartTime + "--" + formatEndTime + "],[" + table + "]第1页查询出数据出错,message:" + jsonObject.get("message"));
-                dataResult = false;
-                message = "[查询第1页数据]报错，message:" + jsonObject.get("message") + "";
-                tycTaskMonitorDao.updateMonitorParams((table+serialno),query.toString(),"2",message);
-                throw new RuntimeException("************************"+message);
+            JSONArray jsonArray = jsonObject.getJSONObject("data").getJSONArray("items");
+            try {
+                insertTableDate(jsonArray);
+                tycTaskMonitorDao.updateMonitorParams((e + serialno), query.toString(), 1, message);
+            } catch (Exception excetion) {
+                //插入table数据报错  对任务记录表进行 记录操作，记录传入参数 msg就记录报错信息
+                tycTaskMonitorDao.updateMonitorParams((table + serialno), query.toString(), 2, "对" + table + "进行数据插入时出错");
             }
-        } catch (Exception exception) {
-            dataResult = false;
-            message = "[接口调用抛出异常],message:" + exception.getMessage();
-            logger.info("接口调用抛出异常111", exception);
-            throw new RuntimeException("************************");
-        }
+            page--;
+            String scrollId = jsonObject.getJSONObject("data").getString("scrollId");
+            //生成signPage
+            JSONObject querySign = new JSONObject();
+            querySign.put("scrollId", scrollId);
+            while (page > 0 && scrollId != null) {
+                JSONObject queryPage = new JSONObject();
+                //当前时间戳
+                long timeStampPage = new Date().getTime();
 
-        /*if (dataResult) {
-            //完成操作将任务记录状态更改为完成
-            tycTaskMonitorDao.updateMonitorBySerialno((e + serialno), 1, message);
+                queryPage.put("_accessKey", accesskey);
+                queryPage.put("_timestamp", timeStampPage);
+                queryPage.put("scrollId", scrollId);
+                String signPage = AccessSecretUtils.sign(accessSecet, timeStampPage, querySign);
+                queryPage.put("_sign", signPage);
+
+                int curpage = totalPage - page + 1;
+                logger.info("[" + formatStartTime + "--" + formatEndTime + "],[" + table + "]开始调用tianyancha接口分页查询第" + curpage + "页数据,入参:" + queryPage);
+
+                JSONObject jsonObjectPage = CallAppletServiceUtils.get("https://data.tianyancha.com/dblog.json", queryPage);
+                if (jsonObjectPage.get("state").toString().equals("ok")) {
+                    JSONArray jsonArrayCurPage = jsonObjectPage.getJSONObject("data").getJSONArray("items");
+                    try {
+                        insertTableDate(jsonArrayCurPage);
+                        tycTaskMonitorDao.updateMonitorParams((e + serialno), query.toString(), 1, message);
+                        page--;
+                    } catch (Exception exception) {
+                        //插入table数据报错  对任务记录表进行 记录操作，记录传入参数 msg就记录报错信息
+                        tycTaskMonitorDao.updateMonitorParams((table + serialno), queryPage.toString(), 2, "对" + table + "进行数据插入时出错");
+                        break;
+                    }
+                } else {
+                    logger.info("[" + formatStartTime + "--" + formatEndTime + "],[" + table + "]第" + curpage + "页查询出数据出错,message:" + jsonObjectPage.get("message"));
+                    message = "[查询第" + curpage + "页数据]报错，message:" + jsonObjectPage.get("message") + "";
+                    tycTaskMonitorDao.updateMonitorParams((table + serialno), queryPage.toString(), 2, message);
+                    break;
+                }
+            }
         } else {
-            tycTaskMonitorDao.updateMonitorBySerialno((e + serialno), 2, message);
-        }*/
+            logger.info("[" + formatStartTime + "--" + formatEndTime + "],[" + table + "]第1页查询出数据出错,message:" + jsonObject.get("message"));
+            message = "[查询第1页数据]报错，message:" + jsonObject.get("message") + "";
+            tycTaskMonitorDao.updateMonitorParams((table + serialno), query.toString(), 2, message);
+        }
     }
 
     //调接口返回数据存入数据库中
