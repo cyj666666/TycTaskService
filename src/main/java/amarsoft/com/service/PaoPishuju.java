@@ -156,9 +156,10 @@ public class PaoPishuju {
                         tycTaskMonitorDao.updateMonitorParams((e + serialno), query.toString(), 1, message);
                         page--;
                     } catch (Exception exception) {
-                        logger.info("[" + formatStartTime + "--" + formatEndTime + "],[" + table + "]分页查询第" + curpage + "页数据报异常:", exception);
+                        logger.info("[" + formatStartTime + "--" + formatEndTime + "],[" + table + "]分页查询第" + curpage + "页插入数据报异常:", exception);
+
                         //插入table数据报错  对任务记录表进行 记录操作，记录传入参数 msg就记录报错信息
-                        tycTaskMonitorDao.updateMonitorParams((table + serialno), queryPage.toString(), 2, "[" + formatStartTime + "--" + formatEndTime + "],[" + table + "]分页查询第" + curpage + "页数据sql报异常");
+                        tycTaskMonitorDao.updateMonitorParams((table + serialno), queryPage.toString(), 2, "[" + formatStartTime + "--" + formatEndTime + "],[" + table + "]分页查询第" + curpage + "页插入数据sql报异常");
                         break;
                     }
                 } else {
@@ -177,52 +178,59 @@ public class PaoPishuju {
 
     //调接口返回数据存入数据库中
     public void insertTableDate(JSONArray items) {
-        if (items != null && items.size() > 0) {
-            logger.info("开始插入sql,items条数：" + items.size());
-            List<String> values = new ArrayList<>(items.size());
-            JSONObject jo = items.getJSONObject(0);
-            String table = jo.getString("table");
-            JSONObject firstData = jo.getJSONObject("data");
-            List<String> attrs = new ArrayList<>(firstData.keySet());
+        String sql = "";
+        try{
+            if (items != null && items.size() > 0) {
+                logger.info("开始插入sql,items条数：" + items.size());
+                List<String> values = new ArrayList<>(items.size());
+                JSONObject jo = items.getJSONObject(0);
+                String table = jo.getString("table");
+                JSONObject firstData = jo.getJSONObject("data");
+                List<String> attrs = new ArrayList<>(firstData.keySet());
 
-            items.stream().forEach(e -> {
-                JSONObject item = (JSONObject) e;
-                JSONObject data = item.getJSONObject("data");
-                StringBuilder sb = new StringBuilder();
-                sb.append("(");
-                for (int i = 0; i < attrs.size() - 1; i++) {
-                    String d = data.getString(attrs.get(i));
-                    if (d != null) {
-                        sb.append("\"" + d.replaceAll("\"", "'") + "\",");
-                    } else {
-                        sb.append(d + ",");
+                items.stream().forEach(e -> {
+                    JSONObject item = (JSONObject) e;
+                    JSONObject data = item.getJSONObject("data");
+                    StringBuilder sb = new StringBuilder();
+                    sb.append("(");
+                    for (int i = 0; i < attrs.size() - 1; i++) {
+                        String d = data.getString(attrs.get(i));
+                        if (d != null) {
+                            sb.append("'" + d.replaceAll("'", "''") + "',");
+                        } else {
+                            sb.append(d + ",");
+                        }
                     }
-                }
-                if (data.getString(attrs.get(attrs.size() - 1)) != null) {
-                    sb.append("\"" + data.getString(attrs.get(attrs.size() - 1)));
-                    sb.append("\")");
-                } else {
-                    sb.append("" + data.getString(attrs.get(attrs.size() - 1)));
-                    sb.append(")");
+                    if (data.getString(attrs.get(attrs.size() - 1)) != null) {
+                        sb.append("'" + data.getString(attrs.get(attrs.size() - 1)).replaceAll("'", "''"));
+                        sb.append("')");
+                    } else {
+                        sb.append("" + data.getString(attrs.get(attrs.size() - 1)));
+                        sb.append(")");
+                    }
+
+                    values.add(sb.toString());
+                });
+                if (values.size() > 0) {
+                    StringBuilder keys = new StringBuilder();
+                    keys.append("(");
+                    for (int i = 0; i < attrs.size() - 1; i++) {
+                        keys.append("" + attrs.get(i) + ",");
+                    }
+                    keys.append("" + attrs.get(attrs.size() - 1) + ")");
+                    String tableValues = keys.toString();
+                    String tableAttrs = StringUtils.join(values.toArray(), ",");
+                    sql = "insert into " + table + " " + tableValues + " values " + tableAttrs;
+                    logger.info("【新增" + table + "表记录】：" + sql);
+                    tycJdbcTemplate.update(sql);
                 }
 
-                values.add(sb.toString());
-            });
-            if (values.size() > 0) {
-                StringBuilder keys = new StringBuilder();
-                keys.append("(");
-                for (int i = 0; i < attrs.size() - 1; i++) {
-                    keys.append("" + attrs.get(i) + ",");
-                }
-                keys.append("" + attrs.get(attrs.size() - 1) + ")");
-                String tableValues = keys.toString();
-                String tableAttrs = StringUtils.join(values.toArray(), ",");
-                String sql = "insert into " + table + " " + tableValues + " values " + tableAttrs;
-                logger.info("【新增" + table + "表记录】：" + sql);
-                tycJdbcTemplate.update(sql);
             }
-
+        }catch (Exception e){
+            logger.warn(sql);
+            throw new RuntimeException("1111");
         }
+
 
 
     }

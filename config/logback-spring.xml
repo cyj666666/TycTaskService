@@ -23,8 +23,11 @@
         </appender>
         
     <springProfile name="dev">
-        <root level="INFO">
+       <!-- <root level="INFO">
         	<appender-ref ref="FileAppender"></appender-ref>
+        </root>-->
+        <root level="WARN">
+            <appender-ref ref="FileAppender"></appender-ref>
         </root>
     </springProfile>
     
