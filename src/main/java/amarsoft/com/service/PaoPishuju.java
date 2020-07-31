@@ -125,6 +125,7 @@ public class PaoPishuju {
                 insertTableDate(jsonArray);
                 tycTaskMonitorDao.updateMonitorParams((e + serialno), query.toString(), 1, message);
             } catch (Exception excetion) {
+                logger.info("[" + formatStartTime + "--" + formatEndTime + "],[" + table + "]查询第1页数据报异常,message:", excetion);
                 //插入table数据报错  对任务记录表进行 记录操作，记录传入参数 msg就记录报错信息
                 tycTaskMonitorDao.updateMonitorParams((table + serialno), query.toString(), 2, "对" + table + "进行数据插入时出错");
             }
@@ -155,19 +156,20 @@ public class PaoPishuju {
                         tycTaskMonitorDao.updateMonitorParams((e + serialno), query.toString(), 1, message);
                         page--;
                     } catch (Exception exception) {
+                        logger.info("[" + formatStartTime + "--" + formatEndTime + "],[" + table + "]分页查询第" + curpage + "页数据报异常:", exception);
                         //插入table数据报错  对任务记录表进行 记录操作，记录传入参数 msg就记录报错信息
                         tycTaskMonitorDao.updateMonitorParams((table + serialno), queryPage.toString(), 2, "对" + table + "进行数据插入时出错");
                         break;
                     }
                 } else {
-                    logger.info("[" + formatStartTime + "--" + formatEndTime + "],[" + table + "]第" + curpage + "页查询出数据出错,message:" + jsonObjectPage.get("message"));
+                    logger.info("[" + formatStartTime + "--" + formatEndTime + "],[" + table + "]第" + curpage + "页查询出数据第三方接口出错,message:" + jsonObjectPage.get("message"));
                     message = "[查询第" + curpage + "页数据]报错，message:" + jsonObjectPage.get("message") + "";
                     tycTaskMonitorDao.updateMonitorParams((table + serialno), queryPage.toString(), 2, message);
                     break;
                 }
             }
         } else {
-            logger.info("[" + formatStartTime + "--" + formatEndTime + "],[" + table + "]第1页查询出数据出错,message:" + jsonObject.get("message"));
+            logger.info("[" + formatStartTime + "--" + formatEndTime + "],[" + table + "]第1页查询出数据第三方接口出错,message:" + jsonObject.get("message"));
             message = "[查询第1页数据]报错，message:" + jsonObject.get("message") + "";
             tycTaskMonitorDao.updateMonitorParams((table + serialno), query.toString(), 2, message);
         }
