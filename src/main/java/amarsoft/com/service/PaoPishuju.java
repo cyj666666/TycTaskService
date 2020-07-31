@@ -125,9 +125,9 @@ public class PaoPishuju {
                 insertTableDate(jsonArray);
                 tycTaskMonitorDao.updateMonitorParams((e + serialno), query.toString(), 1, message);
             } catch (Exception excetion) {
-                logger.info("[" + formatStartTime + "--" + formatEndTime + "],[" + table + "]查询第1页数据报异常,message:", excetion);
+                logger.info("[" + formatStartTime + "--" + formatEndTime + "],[" + table + "]查询第1页数据sql报异常,message:", excetion);
                 //插入table数据报错  对任务记录表进行 记录操作，记录传入参数 msg就记录报错信息
-                tycTaskMonitorDao.updateMonitorParams((table + serialno), query.toString(), 2, "[" + formatStartTime + "--" + formatEndTime + "],[" + table + "]查询第1页数据sql报异常");
+                tycTaskMonitorDao.updateMonitorParams((table + serialno), query.toString(), 2, "查询第1页数据插入sql报异常");
             }
             page--;
             String scrollId = jsonObject.getJSONObject("data").getString("scrollId");
@@ -156,10 +156,10 @@ public class PaoPishuju {
                         tycTaskMonitorDao.updateMonitorParams((e + serialno), query.toString(), 1, message);
                         page--;
                     } catch (Exception exception) {
-                        logger.info("[" + formatStartTime + "--" + formatEndTime + "],[" + table + "]分页查询第" + curpage + "页插入数据报异常:", exception);
+                        logger.info("[" + formatStartTime + "--" + formatEndTime + "],[" + table + "]分页查询第" + curpage + "页插入数据sql报异常:", exception);
 
                         //插入table数据报错  对任务记录表进行 记录操作，记录传入参数 msg就记录报错信息
-                        tycTaskMonitorDao.updateMonitorParams((table + serialno), queryPage.toString(), 2, "[" + formatStartTime + "--" + formatEndTime + "],[" + table + "]分页查询第" + curpage + "页插入数据sql报异常");
+                        tycTaskMonitorDao.updateMonitorParams((table + serialno), queryPage.toString(), 2, "分页查询第" + curpage + "页插入数据sql报异常");
                         break;
                     }
                 } else {
@@ -179,7 +179,7 @@ public class PaoPishuju {
     //调接口返回数据存入数据库中
     public void insertTableDate(JSONArray items) {
         String sql = "";
-        try{
+        try {
             if (items != null && items.size() > 0) {
                 logger.info("开始插入sql,items条数：" + items.size());
                 List<String> values = new ArrayList<>(items.size());
@@ -226,11 +226,10 @@ public class PaoPishuju {
                 }
 
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             logger.warn(sql);
             throw new RuntimeException("1111");
         }
-
 
 
     }

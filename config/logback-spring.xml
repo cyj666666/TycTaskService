@@ -32,7 +32,7 @@
     </springProfile>
     
     <springProfile name="product">
-        <root level="INFO">
+        <root level="WARN">
         	<appender-ref ref="FileAppender"></appender-ref>
         </root>
     </springProfile>
