@@ -26,13 +26,13 @@
        <!-- <root level="INFO">
         	<appender-ref ref="FileAppender"></appender-ref>
         </root>-->
-        <root level="WARN">
+        <root level="INFO">
             <appender-ref ref="FileAppender"></appender-ref>
         </root>
     </springProfile>
     
     <springProfile name="product">
-        <root level="WARN">
+        <root level="INFO">
         	<appender-ref ref="FileAppender"></appender-ref>
         </root>
     </springProfile>

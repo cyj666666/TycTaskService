@@ -3,6 +3,7 @@ package amarsoft.com.service;
 import amarsoft.com.bean.TYCTaskMonitor;
 import amarsoft.com.bean.Timer;
 import amarsoft.com.dao.TYCTaskMonitorDao;
+import amarsoft.com.dao.TYCTaskMonitorDao1;
 import amarsoft.com.utils.AccessSecretUtils;
 import amarsoft.com.utils.CallAppletServiceUtils;
 import amarsoft.com.utils.DateUtils;
@@ -18,18 +19,24 @@ import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
 
 /**
  * @Author lwp
- * @Date 2020/7/30 10:55
+ * @Date 2020/8/1 14:15
  * @Version
  */
 @Service
-public class PaoPishuju {
+public class DemoSqlService {
 
-    private final Logger logger = LoggerFactory.getLogger(PaoPishuju.class);
+    private final Logger logger = LoggerFactory.getLogger(DemoSqlService.class);
     @Value("${amarsoft.tyc.accessKey}")
     private String accesskey;
 
@@ -46,7 +53,7 @@ public class PaoPishuju {
     private Integer ps;
 
     @Autowired
-    private TYCTaskMonitorDao tycTaskMonitorDao;
+    private TYCTaskMonitorDao1 tycTaskMonitorDao;
 
     @Autowired
     @Qualifier("tycdbJdbcTemplate")
@@ -55,12 +62,18 @@ public class PaoPishuju {
     private static final List<String> tables;
 
     static {
-        tables = Arrays.asList("area_code", "category_code", "company", "company_amac_product", "company_app_info", "company_bid", "company_certificate", "company_change", "company_copyright_reg", "company_copyright_works", "company_court_announcement", "company_court_open_announcement", "company_court_register", "company_customs_credit", "company_customs_credit_administrative_penalty", "company_customs_credit_rating", "company_dishonest_info", "company_employment", "company_equity_info", "company_finance", "company_holder", "company_holder_entpub", "company_icp", "company_judicial_assistance", "company_judicial_sale", "company_judicial_sale_item", "company_land_announcement", "company_land_mortgage", "company_land_publicity", "company_land_transfer", "company_lawsuit", "company_license", "company_license_creditchina", "company_license_entpub", "company_patent", "company_punishment_info_creditchina", "company_send_announcement", "company_staff", "company_team_member", "company_tele_license", "company_tele_license_annual_report", "company_tele_license_communication_badness", "company_tm", "company_wechat", "company_weibo", "company_zxr", "company_zxr_evaluate", "company_zxr_final_case", "company_zxr_restrict", "human_name", "organization", "organization_company_relation", "organization_invest", "product_competition");
+        //tables = Arrays.asList("area_code", "category_code", "company", "company_amac_product", "company_app_info", "company_bid", "company_certificate", "company_change", "company_copyright_reg", "company_copyright_works", "company_court_announcement", "company_court_open_announcement", "company_court_register", "company_customs_credit", "company_customs_credit_administrative_penalty", "company_customs_credit_rating", "company_dishonest_info", "company_employment", "company_equity_info", "company_finance", "company_holder", "company_holder_entpub", "company_icp", "company_judicial_assistance", "company_judicial_sale", "company_judicial_sale_item", "company_land_announcement", "company_land_mortgage", "company_land_publicity", "company_land_transfer", "company_lawsuit", "company_license", "company_license_creditchina", "company_license_entpub", "company_patent", "company_punishment_info_creditchina", "company_send_announcement", "company_staff", "company_team_member", "company_tele_license", "company_tele_license_annual_report", "company_tele_license_communication_badness", "company_tm", "company_wechat", "company_weibo", "company_zxr", "company_zxr_evaluate", "company_zxr_final_case", "company_zxr_restrict", "human_name", "organization", "organization_company_relation", "organization_invest", "product_competition");
+        tables = Arrays.asList("company_send_announcement");
     }
 
     public void run() {
-        String sql = "select * from timer where 1=?";
-        List<Timer> list = tycJdbcTemplate.query(sql, new Object[]{1}, new BeanPropertyRowMapper<Timer>(Timer.class));
+        //String sql = "select * from timer where 1=?";
+        List<Timer> list = new ArrayList<>();
+        Timer t = new Timer();
+        t.setStarttime("2020-07-29 20:00:00");
+        t.setEndtime("2020-07-29 20:10:00");
+        list.add(t);
+        //List<Timer> list = tycJdbcTemplate.query(sql, new Object[]{1}, new BeanPropertyRowMapper<Timer>(Timer.class));
         if (list != null && list.size() > 0) {
             list.stream().forEach(e -> {
                 Date starttime = DateUtils.parse(e.getStarttime());
@@ -75,13 +88,17 @@ public class PaoPishuju {
                     newTaskMonitor.setTablename(table);
                     newTaskMonitor.setInputtime(DateUtils.format(new Date(), "yyyy-MM-dd HH:mm:ss"));
                     tycTaskMonitorDao.insertTaskMonitor(newTaskMonitor);
-                    executeTask(table, serialno, starttime, endtime);
+                    try {
+                        executeTask(table, serialno, starttime, endtime);
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                    }
                 });
             });
         }
     }
 
-    private void executeTask(String e, String serialno, Date taskStarttime, Date taskEndtime) {
+    private void executeTask(String e, String serialno, Date taskStarttime, Date taskEndtime) throws IOException {
         String message = "";
         String formatStartTime = DateUtils.format(taskStarttime, "yyyy-MM-dd HH:mm:ss");
         String formatEndTime = DateUtils.format(taskEndtime, "yyyy-MM-dd HH:mm:ss");
@@ -122,20 +139,21 @@ public class PaoPishuju {
             logger.info("[" + formatStartTime + "--" + formatEndTime + "],[" + table + "]查询出" + page + "页数据,每页size:" + ps + "条");
 
             JSONArray jsonArray = jsonObject.getJSONObject("data").getJSONArray("items");
-            try {
+       /*     try {
                 insertTableDate(jsonArray);
                 tycTaskMonitorDao.updateMonitorParams((e + serialno), query.toString(), 1, message);
             } catch (Exception excetion) {
-                logger.info("[" + formatStartTime + "--" + formatEndTime + "],[" + table + "]查询第1页数据sql报异常,message:", excetion);
+                logger.info("[" + formatStartTime + "--" + formatEndTime + "],[" + table + "]查询第1页数据报异常,message:", excetion);
                 //插入table数据报错  对任务记录表进行 记录操作，记录传入参数 msg就记录报错信息
-                tycTaskMonitorDao.updateMonitorParams((table + serialno), query.toString(), 2, "查询第1页数据插入sql报异常");
-            }
+                tycTaskMonitorDao.updateMonitorParams((table + serialno), query.toString(), 2, "[" + formatStartTime + "--" + formatEndTime + "],[" + table + "]查询第1页数据sql报异常");
+            }*/
             page--;
             String scrollId = jsonObject.getJSONObject("data").getString("scrollId");
             //生成signPage
             JSONObject querySign = new JSONObject();
             querySign.put("scrollId", scrollId);
             while (page > 0 && scrollId != null) {
+
                 JSONObject queryPage = new JSONObject();
                 //当前时间戳
                 long timeStampPage = new Date().getTime();
@@ -149,18 +167,21 @@ public class PaoPishuju {
                 int curpage = totalPage - page + 1;
                 logger.info("[" + formatStartTime + "--" + formatEndTime + "],[" + table + "]开始调用tianyancha接口分页查询第" + curpage + "页数据,入参:" + queryPage);
 
+
                 JSONObject jsonObjectPage = CallAppletServiceUtils.get("https://data.tianyancha.com/dblog.json", queryPage);
                 if (jsonObjectPage.get("state").toString().equals("ok")) {
                     JSONArray jsonArrayCurPage = jsonObjectPage.getJSONObject("data").getJSONArray("items");
                     try {
-                        insertTableDate(jsonArrayCurPage);
+                        if (curpage > 372) {
+                            insertTableDate(jsonArrayCurPage);
+                        }
                         tycTaskMonitorDao.updateMonitorParams((e + serialno), query.toString(), 1, message);
                         page--;
                     } catch (Exception exception) {
-                        logger.info("[" + formatStartTime + "--" + formatEndTime + "],[" + table + "]分页查询第" + curpage + "页插入数据sql报异常:", exception);
+                        logger.info("[" + formatStartTime + "--" + formatEndTime + "],[" + table + "]分页查询第" + curpage + "页插入数据报异常:", exception);
 
                         //插入table数据报错  对任务记录表进行 记录操作，记录传入参数 msg就记录报错信息
-                        tycTaskMonitorDao.updateMonitorParams((table + serialno), queryPage.toString(), 2, "分页查询第" + curpage + "页插入数据sql报异常");
+                        tycTaskMonitorDao.updateMonitorParams((table + serialno), queryPage.toString(), 2, "[" + formatStartTime + "--" + formatEndTime + "],[" + table + "]分页查询第" + curpage + "页插入数据sql报异常");
                         break;
                     }
                 } else {
@@ -221,10 +242,9 @@ public class PaoPishuju {
                 String tableValues = keys.toString();
                 String tableAttrs = StringUtils.join(values.toArray(), ",");
                 sql = "insert into " + table + " " + tableValues + " values " + tableAttrs;
-//                logger.info("【新增" + table + "表记录】：" + sql);
+//                    logger.info("【新增" + table + "表记录】：" + sql);
                 tycJdbcTemplate.update(sql);
             }
-
         }
     }
 
