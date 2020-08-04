@@ -10,8 +10,15 @@ spring:
       
 logging.config: ./config/logback-spring.xml
 
+email:
+  emailUrl: http://www.amardata.com/crservice/AmarNotifyService/initEvent
 
-  
+http:
+  proxy:
+    enable: true
+    ip: 172.16.72.173
+    port: 3128
+    schema: http
   
 
       

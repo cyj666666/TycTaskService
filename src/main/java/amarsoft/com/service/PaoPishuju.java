@@ -56,6 +56,7 @@ public class PaoPishuju {
 
     static {
         tables = Arrays.asList("area_code", "category_code", "company", "company_amac_product", "company_app_info", "company_bid", "company_certificate", "company_change", "company_copyright_reg", "company_copyright_works", "company_court_announcement", "company_court_open_announcement", "company_court_register", "company_customs_credit", "company_customs_credit_administrative_penalty", "company_customs_credit_rating", "company_dishonest_info", "company_employment", "company_equity_info", "company_finance", "company_holder", "company_holder_entpub", "company_icp", "company_judicial_assistance", "company_judicial_sale", "company_judicial_sale_item", "company_land_announcement", "company_land_mortgage", "company_land_publicity", "company_land_transfer", "company_lawsuit", "company_license", "company_license_creditchina", "company_license_entpub", "company_patent", "company_punishment_info_creditchina", "company_send_announcement", "company_staff", "company_team_member", "company_tele_license", "company_tele_license_annual_report", "company_tele_license_communication_badness", "company_tm", "company_wechat", "company_weibo", "company_zxr", "company_zxr_evaluate", "company_zxr_final_case", "company_zxr_restrict", "human_name", "organization", "organization_company_relation", "organization_invest", "product_competition");
+        //tables = Arrays.asList("company_holder","company_holder_entpub");
     }
 
     public void run() {
