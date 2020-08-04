@@ -1,5 +1,6 @@
 package amarsoft;
 
+import amarsoft.com.service.DemoFile;
 import amarsoft.com.service.DemoSqlService;
 import amarsoft.com.service.PaoPishuju;
 import amarsoft.com.service.TYCService;
@@ -22,7 +23,9 @@ public class TycTaskServiceApplication implements CommandLineRunner {
     Logger logger = LoggerFactory.getLogger(TycTaskServiceApplication.class);
 
     public static void main(String[] args) {
-        SpringApplication.run(TycTaskServiceApplication.class, args);
+
+        System.exit(SpringApplication
+                .exit(SpringApplication.run(TycTaskServiceApplication.class, args)));
     }
 
 
@@ -33,13 +36,17 @@ public class TycTaskServiceApplication implements CommandLineRunner {
     private PaoPishuju paoPishuju;
 
     @Autowired
+    private DemoFile demoFile;
+
+    @Autowired
     private DemoSqlService demoSqlService;
 
     @Override
     public void run(String... strings) throws Exception {
         logger.info("当前时间：" + LocalDateTime.now());
-        paoPishuju.run();
+//        paoPishuju.run();
 //        demoSqlService.run();
+        demoFile.run();
         System.out.println("任务结束");
         logger.info("结束时间：" + LocalDateTime.now());
     }
